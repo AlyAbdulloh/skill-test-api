@@ -38,11 +38,24 @@ class ReportService
                     ->groupByRaw('MONTH(tr_expenses.expense_date)')
                     ->orderByRaw('MONTH(tr_expenses.expense_date)')
                     ->get();
-        
+
+        $allIncome = PaymentBill::selectRaw('SUM(amount) as total_income')
+            ->where('status', 'paid')
+            ->first();
+
+        $allExpense = Expense::join('tr_expense_details', 'tr_expenses.id', '=', 'tr_expense_details.expense_id')
+            ->selectRaw('SUM(tr_expense_details.amount) as total_expense')
+            ->first();
+
+        $remainingBalance = (float) $allIncome->total_income - (float) $allExpense->total_expense;
+
         return [
             'year' => $year,
             'income' => $income,
             'expense' => $expense,
+            'total_income' => (float) $allIncome->total_income,
+            'total_expense' => (float) $allExpense->total_expense,
+            'remaining_balance' => $remainingBalance,
         ];
     }
 
